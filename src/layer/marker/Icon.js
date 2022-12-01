@@ -92,27 +92,38 @@ export const Icon = Class.extend({
 	// Called internally when the icon has to be shown, returns a `<img>` HTML element
 	// styled according to the options.
 	createIcon(oldIcon) {
-		return this._createIcon('icon', oldIcon);
+		return this._createIcon(oldIcon);
 	},
 
 	// @method createShadow(oldIcon?: HTMLElement): HTMLElement
 	// As `createIcon`, but for the shadow beneath it.
 	createShadow(oldIcon) {
-		return this._createIcon('shadow', oldIcon);
-	},
-
-	_createIcon(name, oldIcon) {
-		const src = this._getIconUrl(name);
+		const src = this._getIconUrl('shadow');
 
 		if (!src) {
-			if (name === 'icon') {
-				throw new Error('iconUrl not set in Icon options (see the docs).');
-			}
 			return null;
 		}
 
 		const img = this._createImg(src, oldIcon && oldIcon.tagName === 'IMG' ? oldIcon : null);
-		this._setIconStyles(img, name);
+		this._setIconStyles(img, 'shadow');
+
+		if (this.options.crossOrigin || this.options.crossOrigin === '') {
+			img.crossOrigin = this.options.crossOrigin === true ? '' : this.options.crossOrigin;
+		}
+
+		return img;
+	},
+
+	_createIcon(oldIcon) {
+		const iconSrc = this._getIconUrl('icon');
+		const markerSrc = this._getIconUrl('marker');
+
+		if (!markerSrc || !iconSrc) {
+			throw new Error('iconUrl or markerUrl not set in Icon options (see the docs).');
+		}
+
+		const img = this._createWrapper(markerSrc, iconSrc, oldIcon && oldIcon.tagName === 'IMG' ? oldIcon : null);
+		this._setIconStyles(img, 'icon');
 
 		if (this.options.crossOrigin || this.options.crossOrigin === '') {
 			img.crossOrigin = this.options.crossOrigin === true ? '' : this.options.crossOrigin;
@@ -144,6 +155,32 @@ export const Icon = Class.extend({
 			img.style.width  = `${size.x}px`;
 			img.style.height = `${size.y}px`;
 		}
+	},
+
+	_createWrapper(src, src2, el) {
+		if (!el) {
+			el = document.createElement('div');
+			const c1 = document.createElement('img');
+			const c2 = document.createElement('img');
+			c1.style.position = 'absolute';
+			c2.style.position = 'absolute';
+
+			c1.style.transform = `translate(${this.options.markerOffset[0]}px, ${this.options.markerOffset[1]}px)`;
+			c1.style.width = `${this.options.markerSize[0]}px`;
+			c1.style.height = `${this.options.markerSize[1]}px`;
+
+			c2.style.objectFit = 'cover';
+			c2.style.transform = `translate(${this.options.iconOffset[0]}px, ${this.options.iconOffset[1]}px)`;
+			c2.style.width = `${this.options.iconSize[0]}px`;
+			c2.style.height = `${this.options.iconSize[1]}px`;
+
+			el.appendChild(c1);
+			el.appendChild(c2);
+		}
+
+		el.children[0].src = src;
+		el.children[1].src = src2;
+		return el;
 	},
 
 	_createImg(src, el) {
