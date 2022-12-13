@@ -180,6 +180,8 @@ export const Icon = Class.extend({
 
 		el.children[0].src = src;
 		el.children[1].src = src2;
+		el.children[0].title = this.options.tooltip;
+		el.children[1].title = this.options.tooltip;
 		return el;
 	},
 
